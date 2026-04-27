@@ -25,9 +25,27 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await firebaseAuth.createUserWithEmailAndPassword(
+    UserCredential userCredential = await firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
+    
+    // Update user profile with username
+    await userCredential.user?.updateDisplayName(username);
+    
+    // Send email verification
+    await sendEmailVerification();
+    
+    return userCredential;
   }
+
+  //Send email verification
+  Future<void> sendEmailVerification() async {
+    if (currentUser != null && !currentUser!.emailVerified) {
+      await currentUser!.sendEmailVerification();
+    }
+  }
+
+  //Check if email is verified
+  bool get isEmailVerified => currentUser?.emailVerified ?? false;
 
   //Log out function
   Future<void> signOut() async {

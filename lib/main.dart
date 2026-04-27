@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'widgets/custom_text_field.dart';
 import 'widgets/social_button.dart';
 import 'signup_page.dart';
+import 'auth_service.dart';
+import 'pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +30,18 @@ class UniFindApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF1A1A1A),
         fontFamily: 'Roboto',
       ),
-      home: const LogInScreen(),
+      home: StreamBuilder<User?>(
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active) {
+            User? user = snapshot.data;
+            if (user != null && user.emailVerified) {
+              return const HomePage();
+            }
+          }
+          return const LogInScreen();
+        },
+      ),
     );
   } 
 }
@@ -43,12 +57,58 @@ class _LogInScreenState extends State<LogInScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String errorMessage = '';
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _signIn() async {
+    setState(() {
+      _isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      await AuthService().signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      // Check if email is verified
+      await Future.delayed(const Duration(milliseconds: 500));
+      final authService = AuthService();
+      if (!authService.isEmailVerified) {
+        if (mounted) {
+          setState(() {
+            errorMessage = 'Please verify your email before signing in.';
+            _isLoading = false;
+          });
+          // Send verification email again
+          await authService.sendEmailVerification();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Verification email resent. Check your inbox.')),
+            );
+          }
+        }
+        await AuthService().signOut();
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message ?? 'An error occurred';
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'An error occurred. Please try again.';
+        _isLoading = false;
+      });
+    }
   }
   
   @override
@@ -127,12 +187,23 @@ class _LogInScreenState extends State<LogInScreen> {
                       ),
                       const SizedBox(height: 20),
 
+                      if (errorMessage.isNotEmpty) ...[const SizedBox(height: 10),
+                        Text(
+                          errorMessage,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+
                       // Sign In button
                       SizedBox(
                         width: double.infinity,
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: _isLoading ? null : _signIn,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4ADE4A),
                             foregroundColor: Colors.black,
@@ -141,14 +212,23 @@ class _LogInScreenState extends State<LogInScreen> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
+                          child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                                ),
+                              )
+                            : const Text(
+                                'Sign In',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
                         ),
                       ),
 

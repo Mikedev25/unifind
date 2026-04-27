@@ -1,38 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:unifind/auth_service.dart';
-import 'package:unifind/main.dart';
-import 'firebase_options.dart';
-
+import 'auth_service.dart';
 import 'widgets/custom_text_field.dart';
-import 'package:unifind/widgets/social_button.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-);
-  runApp (const UniFindApp());
-}
-
-class UniFindApp extends StatelessWidget {
-  const UniFindApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'UniFind',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-        fontFamily: 'Roboto',
-      ),
-      home: const LogInScreen(),
-    );
-  } 
-}
+import 'widgets/social_button.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -59,17 +29,48 @@ class _SignupPageState extends State<SignupPage> {
 
   void signup() async {
     try {
-      await authService.value.signUp(
+      await AuthService().signUp(
         username: _usernameController.text,
         email: _emailController.text, 
-        password: _passwordController.text);  
-      popPage();
+        password: _passwordController.text);
+      
+      // Show success message with verification email info
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF2A2A2A),
+              title: const Text(
+                'Verification Email Sent',
+                style: TextStyle(color: Colors.white),
+              ),
+              content: Text(
+                'A verification email has been sent to ${_emailController.text}. Please verify your email before signing in.',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    Navigator.pop(context); // Close signup page
+                  },
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(color: Color(0xFF4ADE4A)),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } on FirebaseAuthException catch (e) {
       setState(() {
         errorMessage = e.message ?? 'An error occurred';
       });
     }
-      
   }
 
   void popPage() {
@@ -266,12 +267,7 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LogInScreen(),
-                                ),
-                              );
+                              Navigator.pop(context);
                             },
                             child: const Text(
                               'Sign In',
