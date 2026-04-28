@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+//import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'firebase_options.dart';
 
 import 'widgets/custom_text_field.dart';
 import 'widgets/social_button.dart';
 import 'signup_page.dart';
 import 'auth_service.dart';
 import 'pages/home_page.dart';
+import 'pages/reset_pass.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -236,14 +238,22 @@ class _LogInScreenState extends State<LogInScreen> {
 
                       // Forgot password
                       TextButton(
-                        onPressed: () {},
-                        child: Text(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ResetPass(
+                                email: _emailController.text.trim(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: const Text(
                           'Forgot password?',
                           style: TextStyle(
-                            decoration: TextDecoration.underline,
-                            color: Colors.white30,
+                            color: Color.fromARGB(255, 24, 222, 74),
                             fontSize: 12.5,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -291,7 +301,11 @@ class _LogInScreenState extends State<LogInScreen> {
                               height: 50,
                               fit: BoxFit.contain
                             ),
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Apple Sign-In is currently unavailable on this platform.')),
+                              );
+                            },
                           ),
                           const SizedBox(width: 30),
                           SocialButton(
@@ -301,7 +315,18 @@ class _LogInScreenState extends State<LogInScreen> {
                               height: 40,
                               fit: BoxFit.contain
                             ),
-                            onTap: () {},
+                            onTap: () async {
+                              setState(() => _isLoading = true);
+                              try {
+                                await AuthService().signInWithGoogle();
+                              } catch (e) {
+                                if (mounted) {
+                                  setState(() => errorMessage = 'Google Sign-In failed. Please try again.');
+                                }
+                              } finally {
+                                if (mounted) setState(() => _isLoading = false);
+                              }
+                            },
                           ),
                         ],
                       ),

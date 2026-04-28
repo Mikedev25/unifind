@@ -12,7 +12,20 @@
           "package_name": "com.example.unifind"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "778725411804-3uvnfuasj9fuail3nf1pqrfu4mtgp8qg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.unifind",
+            "certificate_hash": "ea361a7382125803f17cca13aef5456dba18b3d9"
+          }
+        },
+        {
+          "client_id": "778725411804-9jj74as4k6nd2fq3hl5bse89jdkjdpt2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBeBoHnGocxm7ORxGOzc49KIOhxPYlVK_0"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "778725411804-9jj74as4k6nd2fq3hl5bse89jdkjdpt2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "778725411804-b02pq956ec214272pq10m6c2ljs4kf4u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.unifind"
+              }
+            }
+          ]
         }
       }
     }
