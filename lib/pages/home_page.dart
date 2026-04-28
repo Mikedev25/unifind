@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../auth_service.dart';
+import '../backends/auth_service.dart';
+import 'package:unifind/widgets/navigation_bar.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -52,6 +53,12 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: CustomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          // Handle navigation tap
+        },
       ),
     );
   }

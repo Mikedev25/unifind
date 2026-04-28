@@ -1,52 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 //import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
-
-import 'widgets/custom_text_field.dart';
-import 'widgets/social_button.dart';
 import 'signup_page.dart';
-import 'auth_service.dart';
-import 'pages/home_page.dart';
-import 'pages/reset_pass.dart';
+import '../backends/auth_service.dart';
+import '../backends/reset_pass.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/social_button.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-);
-  runApp (const UniFindApp());
-}
-
-class UniFindApp extends StatelessWidget {
-  const UniFindApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'UniFind',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1A1A1A),
-        fontFamily: 'Roboto',
-      ),
-      home: StreamBuilder<User?>(
-        stream: AuthService().authStateChanges,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.active) {
-            User? user = snapshot.data;
-            if (user != null && user.emailVerified) {
-              return const HomePage();
-            }
-          }
-          return const LogInScreen();
-        },
-      ),
-    );
-  } 
-}
 
 class LogInScreen extends StatefulWidget {
   const LogInScreen({super.key});

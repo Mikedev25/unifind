@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
-import 'widgets/custom_text_field.dart';
-import 'widgets/social_button.dart';
+import '../backends/auth_service.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/social_button.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
