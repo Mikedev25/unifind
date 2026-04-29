@@ -38,6 +38,7 @@ dependencies:
   firebase_auth: ^6.4.0
   google_sign_in: ^6.2.1
   curved_navigation_bar: ^1.0.3
+  image_picker: ^1.0.7
   # sign_in_with_apple: ^4.3.0 // add this back when on Mac
   crypto: ^3.0.3
 dev_dependencies:

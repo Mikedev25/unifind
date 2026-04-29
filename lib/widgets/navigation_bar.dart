@@ -14,9 +14,9 @@ class CustomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CurvedNavigationBar(
-      backgroundColor: const Color(0xFF4ADE4A),
-      color: const Color(0xFF4ADE4A),
-      buttonBackgroundColor: const Color(0xFF4ADE4A),
+      backgroundColor: Colors.transparent,
+      color: const Color(0xFF2ECC71),
+      buttonBackgroundColor: const Color(0xFF2ECC71),
       animationDuration: Duration(milliseconds: 400),
       height: 70,
       index: currentIndex,
@@ -28,7 +28,7 @@ class CustomNavigationBar extends StatelessWidget {
         Icon(Icons.person, size: 30, color: Colors.white),
       ],
       onTap: (index) {
-
+        onTap(index);
       },
     );
   }
