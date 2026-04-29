@@ -17,4 +17,8 @@ A lost and found campush mobile application system.
                                 setState(() => _isLoading = false);
                               }
 
+Then run flutter pub get and for iOS add this to Info.plist:
+xml
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Used to attach a photo of the lost item.</string>
                               
