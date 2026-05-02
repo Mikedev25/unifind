@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 //import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
 
@@ -83,6 +84,13 @@ class AuthService {
     // Update user profile with username
     await userCredential.user?.updateDisplayName(username);
     
+    // Store user info in the firestore database
+    await FirebaseFirestore.instance.collection('users').doc(userCredential.user?.uid).set({
+    'name': username,
+    'email': email,
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+
     // Send email verification
     await sendEmailVerification();
     
