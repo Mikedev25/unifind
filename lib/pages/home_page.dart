@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../backends/auth_service.dart';
+import '../backends/item_service.dart';
 import 'package:unifind/widgets/navigation_bar.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class LostItem {
   final String id;
@@ -11,7 +13,7 @@ class LostItem {
   final String model;
   final String category;
   final String status;
-  final String? imagePath;
+  final String? imageBase64;
 
   LostItem({
     required this.id,
@@ -19,8 +21,19 @@ class LostItem {
     required this.model,
     required this.category,
     this.status = 'Lost',
-    this.imagePath,
+    this.imageBase64,
   });
+
+  factory LostItem.fromMap(Map<String, dynamic> map) {
+    return LostItem(
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      model: map['model'] ?? '',
+      category: map['category'] ?? '',
+      status: map['status'] ?? 'Lost',
+      imageBase64: map['imageBase64'],
+    );
+  }
 }
 
 class HomePage extends StatefulWidget {
@@ -33,20 +46,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _selectedCategory = 'All';
   final List<String> _categories = ['All', 'Electronics', 'Documents', 'Others'];
-  final List<LostItem> _items = [];
 
-  List<LostItem> get _filteredItems {
-    if (_selectedCategory == 'All') return _items;
-    return _items.where((i) => i.category == _selectedCategory).toList();
-  }
   void _openAddItemSheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddItemSheet(
-        onAdd: (item) => setState(() => _items.add(item)),
-      ),
+      builder: (_) => const AddItemSheet(),
     );
   }
  
@@ -80,7 +86,43 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCategoryFilter(),
-          Expanded(child: _buildGrid()),
+          Expanded(
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: ItemService().getItemsStream(),
+              builder: (context, snapshot) {
+                if(snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF2ECC71)),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off, size: 52, color: Colors.white24),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No items yet. \nTap + to report a lost item.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                final allItems = snapshot.data!
+                  .map((m) => LostItem.fromMap(m))
+                  .toList();
+
+                final displayed = _selectedCategory == 'All'
+                  ? allItems
+                  : allItems.where((i) => i.category == _selectedCategory).toList();
+
+                return _buildGrid(displayed);
+              }
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: CustomNavigationBar(
@@ -130,9 +172,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildGrid() {
-    final displayed = _filteredItems;
-
+  Widget _buildGrid(List<LostItem> displayed) {
     if(displayed.isEmpty) {
       return Center(
         child: Column(
@@ -141,7 +181,7 @@ class _HomePageState extends State<HomePage> {
             Icon(Icons.search_off, size: 52, color: Colors.white24),
             const SizedBox(height: 12),
             Text(
-              'No items yet. \nTap + to report a lost item.',
+              'No items in this category.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white38, fontSize: 14),
             ),
@@ -176,9 +216,9 @@ class _HomePageState extends State<HomePage> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                child: item.imagePath != null
-                  ? Image.file(
-                      File(item.imagePath!),
+                child: item.imageBase64 != null
+                  ? Image.memory(
+                      base64Decode(item.imageBase64!),
                       height: 115,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -263,8 +303,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class AddItemSheet extends StatefulWidget {
-  final void Function(LostItem) onAdd;
-  const AddItemSheet({super.key, required this.onAdd});
+  const AddItemSheet({super.key});
 
   @override
   State<AddItemSheet> createState() => _AddItemSheetState();
@@ -274,9 +313,11 @@ class _AddItemSheetState extends State<AddItemSheet> {
   final _nameController = TextEditingController();
   final _modelController = TextEditingController();
   String _selectedCategory = 'Electronics';
+  String _selectedStatus = 'Lost';
   String? _imagePath;
   final _picker = ImagePicker();
   final _categories = ['Electronics', 'Documents', 'Others'];
+  bool _isLoading = false;
 
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(
@@ -286,7 +327,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
     if (picked != null) setState(() => _imagePath = picked.path);
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final name = _nameController.text.trim();
     final model = _modelController.text.trim();
 
@@ -299,16 +340,17 @@ class _AddItemSheetState extends State<AddItemSheet> {
       );
       return;
     }
+    setState(() => _isLoading = true); 
 
-    widget.onAdd(LostItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    await ItemService().addItem(
       name: name,
       model: model,
       category: _selectedCategory,
+      status: _selectedStatus,
       imagePath: _imagePath,
-    ));
-
-    Navigator.pop(context);
+    );
+    
+    if(mounted) Navigator.pop(context);
   }
 
   @override
@@ -342,15 +384,53 @@ class _AddItemSheetState extends State<AddItemSheet> {
               ),
             ),
 
-            const Text(
-              'Report Lost Item',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+            Text(
+              _selectedStatus == 'Lost' ? 'Report as Lost' : 'Report as Found',
+              style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 18),
+
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3A3A3A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: ['Lost', 'Found'].map((status) {
+                  final isSelected = _selectedStatus == status;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedStatus = status),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                            ? (status == 'Lost'
+                                ? const Color(0xFFE74C3C)
+                                : const Color(0xFF2ECC71))
+                            : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          status == 'Lost' ? 'Report as Lost' : 'Report as Found',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : Colors.white38,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
 
             // ── Image picker ──
             GestureDetector(
@@ -403,7 +483,8 @@ class _AddItemSheetState extends State<AddItemSheet> {
             // ── Category ──
             _label('Category'),
             const SizedBox(height: 8),
-            Row(
+
+             Row(
               children: _categories.map((cat) {
                 final isSelected = cat == _selectedCategory;
                 return Padding(
@@ -439,7 +520,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: _submit,
+                onPressed: _isLoading? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2ECC71),
                   foregroundColor: Colors.white,
@@ -448,9 +529,18 @@ class _AddItemSheetState extends State<AddItemSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Report as Lost',
-                  style: TextStyle(
+                child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                  )
+                : const Text(
+                    'Submit',
+                    style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
