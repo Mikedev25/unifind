@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ItemService {
   final _db = FirebaseFirestore.instance;
@@ -35,6 +36,8 @@ class ItemService {
       'status' : status,
       'imageBase64' : imageBase64,
       'createdAt': FieldValue.serverTimestamp(),
+      'ownerId' : FirebaseAuth.instance.currentUser!.uid,
+      'ownerName' : FirebaseAuth.instance.currentUser!.displayName ?? 'Unknown',
     });
   }
   
