@@ -42,6 +42,8 @@ dependencies:
   cloud_firestore: 6.3.0
   # sign_in_with_apple: ^4.3.0 // add this back when on Mac
   crypto: ^3.0.3
+  geolocator: ^10.1.0
+  http: ^1.1.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

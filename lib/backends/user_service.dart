@@ -17,7 +17,7 @@ class UserService {
       'name': name,
       'email': email,
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
   }
 
   // ── Get current user profile ──

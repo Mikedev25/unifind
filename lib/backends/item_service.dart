@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ItemService {
   final _db = FirebaseFirestore.instance;
@@ -36,8 +35,6 @@ class ItemService {
       'status' : status,
       'imageBase64' : imageBase64,
       'createdAt': FieldValue.serverTimestamp(),
-      'ownerId' : FirebaseAuth.instance.currentUser!.uid,
-      'ownerName' : FirebaseAuth.instance.currentUser!.displayName ?? 'Unknown',
     });
   }
   
@@ -49,6 +46,13 @@ class ItemService {
       .map((snapshot) => snapshot.docs
         .map((doc) => {'id' : doc.id, ...doc.data()})
         .toList());
+  }
+
+  Future<void> clearAllItems() async {
+    final snapshot = await _db.collection('items').get();
+    for (var doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
   }
 }
 
