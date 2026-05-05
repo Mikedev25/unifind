@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:unifind/widgets/navigation_bar.dart';
 import 'home_page.dart';
+import 'search_page.dart';
+import 'settings/settings_page.dart';
 import 'inbox_page.dart';
 
 class MainPage extends StatefulWidget{
@@ -29,8 +31,8 @@ class _MainPageState extends State<MainPage> {
       const HomePage(),
       const InboxPage(),
       const SizedBox(),
-      const SizedBox(),
-      const SizedBox(),
+      const SearchPage(),
+      const SettingsPage(),
     ];
 
     return Scaffold(

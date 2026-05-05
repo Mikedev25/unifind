@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:unifind/pages/main_page.dart';
 import '../backends/firebase_options.dart';
-import 'package:unifind/pages/home_page.dart';
 import 'package:unifind/backends/auth_service.dart';
 import 'package:unifind/pages/login_page.dart';
 
@@ -33,7 +33,7 @@ class UniFindApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.active) {
             User? user = snapshot.data;
             if (user != null && user.emailVerified) {
-              return const HomePage();
+              return const MainPage();
             }
           }
           return const LogInScreen();

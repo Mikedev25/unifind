@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../backends/item_service.dart';
-import 'package:unifind/widgets/navigation_bar.dart';
-import 'package:unifind/pages/settings/settings_page.dart';
-import 'package:unifind/pages/search_page.dart';
+import '../backends/auth_service.dart';
+import '../backends/message_service.dart';
+import 'package:unifind/pages/chat_page.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -15,6 +15,8 @@ class LostItem {
   final String category;
   final String status;
   final String? imageBase64;
+  final String ownerId;
+  final String ownerName;
 
   LostItem({
     required this.id,
@@ -23,6 +25,9 @@ class LostItem {
     required this.category,
     this.status = 'Lost',
     this.imageBase64,
+    required this.ownerId,
+    required this.ownerName,
+
   });
 
   factory LostItem.fromMap(Map<String, dynamic> map) {
@@ -33,6 +38,8 @@ class LostItem {
       category: map['category'] ?? '',
       status: map['status'] ?? 'Lost',
       imageBase64: map['imageBase64'],
+      ownerId: map['ownerId'] ?? '',
+      ownerName: map['ownerName'] ?? 'Unknown',
     );
   }
 }
@@ -47,15 +54,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _selectedCategory = 'All';
   final List<String> _categories = ['All', 'Electronics', 'Documents', 'Others'];
-
-  void _openAddItemSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const AddItemSheet(),
-    );
-  }
  
   @override
   Widget build(BuildContext context) {
@@ -116,24 +114,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: CustomNavigationBar(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 2) {
-            _openAddItemSheet();
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchPage()),
-            );
-          } else if (index == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsPage()),
-            );
-          }
-        },
       ),
     );
   }
@@ -283,8 +263,38 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 6),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    final currentUid = AuthService().currentUser?.uid ?? '';
+                    if (item.ownerId == currentUid) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                        content: Text('This is your own item.',
+                        style: TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: Colors.transparent,
+                        elevation: 0,
+                        ),
+                      );
+                      return;
+                    }
 
+                    final conversationID = await MessageService().getOrCreateConversation(
+                      otherUserId: item.ownerId, 
+                      otherUserName: item.ownerName, 
+                      itemId: item.id, 
+                      itemName: item.name,
+                    );
+
+                    if (!mounted) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatPage(
+                            conversationID: conversationID, 
+                            otherUserName: item.ownerName,
+                          ),
+                        ),
+                      );
                   },
                   child: const Text(
                     'View Details',
@@ -324,7 +334,7 @@ class _AddItemSheetState extends State<AddItemSheet> {
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
+      imageQuality: 40,
     );
     if (picked != null) setState(() => _imagePath = picked.path);
   }
@@ -336,8 +346,12 @@ class _AddItemSheetState extends State<AddItemSheet> {
     if (name.isEmpty || model.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in all fields.'),
-          backgroundColor: Color(0xFFE74C3C),
+          content: Text('Please fill in all fields.',
+          style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
+          behavior: SnackBarBehavior.fixed,
+          elevation: 0,
         ),
       );
       return;
