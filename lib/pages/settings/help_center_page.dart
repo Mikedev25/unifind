@@ -197,7 +197,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2ECC71).withOpacity(0.2),
+                      color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -238,7 +238,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2ECC71).withOpacity(0.2),
+                      color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -279,7 +279,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2ECC71).withOpacity(0.2),
+                      color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -321,9 +321,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF2ECC71).withOpacity(0.1),
+            color: const Color(0xFF2ECC71).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF2ECC71).withOpacity(0.3)),
+            border: Border.all(color: const Color(0xFF2ECC71).withValues(alpha: 0.3)),
           ),
           child: Text(
             'Response times: Email (24-48 hours), Chat (2-4 hours), Phone (during business hours)',

@@ -63,7 +63,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2ECC71).withOpacity(0.2),
+                    color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -141,7 +141,7 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2ECC71).withOpacity(0.2),
+                      color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(

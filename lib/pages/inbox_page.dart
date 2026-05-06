@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../backends/auth_service.dart';
 import '../backends/message_service.dart';
 
 class InboxPage extends StatefulWidget {
@@ -31,11 +30,9 @@ class _InboxPageState extends State<InboxPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () {
-              AuthService().signOut();
-              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-            },
+            icon: const Icon(Icons.light_mode, color: Colors.white),
+            onPressed: () {}
+              
           ),
         ],
       ),

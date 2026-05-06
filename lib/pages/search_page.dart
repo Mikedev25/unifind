@@ -10,12 +10,19 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
-  String _selectedType = 'All Items'; 
+  String _selectedType = 'All'; 
   bool _showFilters = false;
 
   final List<String> categories = ['All', 'Electronics', 'Documents', 'Others'];
 
-  final List<String> itemTypes = ['All Items', 'Lost Items', 'Found Items'];
+  final List<String> itemTypes = ['All', 'Lost', 'Found'];
+
+  int get _activeFilterCount {
+    int count = 0;
+    if (_selectedType != 'All') count++;
+    if (_selectedCategory != 'All') count++;
+    return count;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +39,7 @@ class _SearchPageState extends State<SearchPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: false,
+        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -98,6 +105,17 @@ class _SearchPageState extends State<SearchPage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    if (_activeFilterCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                            '($_activeFilterCount)',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     const Spacer(),
                     Icon(
                       _showFilters ? Icons.expand_less : Icons.expand_more,
@@ -118,94 +136,27 @@ class _SearchPageState extends State<SearchPage> {
                   // Item Type Filter
                   _buildFilterSection(
                     title: 'Item Type',
-                    child: Wrap(
-                      spacing: 8,
-                      children: itemTypes.map((type) {
-                        final isSelected = _selectedType == type;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedType = type;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF2ECC71)
-                                  : const Color(0xFF2C2C2C),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF2ECC71)
-                                    : Colors.white12,
-                              ),
-                            ),
-                            child: Text(
-                              type,
-                              style: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                    child: _SegmentedControl(
+                        options: itemTypes,
+                        selected: _selectedType,
+                        onChanged: (val) => setState(() => _selectedType = val),
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 16),
 
                   // Category Filter
                   _buildFilterSection(
                     title: 'Category',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: categories.map((cat) {
-                        final isSelected = _selectedCategory == cat;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = cat;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? const Color(0xFF2ECC71)
-                                  : const Color(0xFF2C2C2C),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: isSelected
-                                    ? const Color(0xFF2ECC71)
-                                    : Colors.white12,
-                              ),
-                            ),
-                            child: Text(
-                              cat,
-                              style: TextStyle(
-                                color: isSelected ? Colors.black : Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                    child: _SegmentedControl(
+                      options: categories,
+                      selected: _selectedCategory,
+                      onChanged: (val) => setState(() => _selectedCategory = val),
+                      )
                   ),
                 ],
               ),
             ),
-
+          const SizedBox(height: 10),
           // Results Count
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -226,7 +177,7 @@ class _SearchPageState extends State<SearchPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.search_off,
+                    Icons.search,
                     size: 64,
                     color: Colors.white30,
                   ),
@@ -273,6 +224,56 @@ class _SearchPageState extends State<SearchPage> {
         const SizedBox(height: 8),
         child,
       ],
+    );
+  }
+}
+
+class _SegmentedControl extends StatelessWidget {
+  final List<String> options;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _SegmentedControl({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: options.map((options) {
+          final isSelected = selected == options;
+          return Expanded(
+            child: GestureDetector(
+              onTap:() => onChanged(options),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF2ECC71) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  options,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : Colors.white54,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList()
+      ),
     );
   }
 }

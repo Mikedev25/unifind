@@ -29,11 +29,7 @@ class _SettingsPageState extends State<SettingsPage> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -101,8 +97,8 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 12),
           _buildActionButton(
             label: 'Delete Account',
-            backgroundColor: Colors.red.withOpacity(0.2),
-            textColor: Colors.red,
+            backgroundColor: Colors.redAccent,
+            textColor: Colors.white,
             onPressed: () {
               _showDeleteAccountConfirmation();
             },
@@ -110,7 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 12),
           _buildActionButton(
             label: 'Clear All Items',
-            backgroundColor: Colors.orange.withOpacity(0.2),
+            backgroundColor: Colors.orange.withValues(alpha: 0.2),
             textColor: Colors.orange,
             onPressed: () {
               _showClearItemsConfirmation();
@@ -270,9 +266,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showClearItemsConfirmation() {
+    final parentContext = context;
+
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF2C2C2C),
         title: const Text(
           'Clear All Items?',
@@ -292,20 +290,20 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
               try {
                 await ItemService().clearAllItems();
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('All items cleared successfully')),
+                if (!mounted) return;
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All items cleared successfully')),
                   );
-                }
+                
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Error clearing items: $e')),
                   );
-                }
+                
               }
             },
             child: const Text(
