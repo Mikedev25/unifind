@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class NotificationSettingsPage extends StatefulWidget {
@@ -12,15 +14,63 @@ enum NotificationPreference { mute, normal, push }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   NotificationPreference _selectedPreference = NotificationPreference.normal;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadPreference();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> _loadPreference() async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final saved = doc.data()?['notificationPreference'] as String?;
+      if (saved != null) {
+        final match = NotificationPreference.values.firstWhere(
+          (e) => e.name == saved,
+          orElse: () => NotificationPreference.normal,
+        );
+        if (mounted) setState(() => _selectedPreference = match);
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load notification preference: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _savePreference(NotificationPreference value) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(
+            {'notificationPreference': value.name},
+            SetOptions(merge: true),
+          );
+    } catch (e) {
+      debugPrint('Failed to save notification preference: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save. Please try again.'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          )
+        );
+      }
+    }
   }
 
   @override
@@ -44,7 +94,9 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: ListView(
+      body: _isLoading
+        ? const Center(child: CircularProgressIndicator(color: Color(0xFF2ECC71)))
+        : ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildSectionTitle('Notification Settings'),
@@ -96,11 +148,14 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     required IconData icon,
   }) {
     final isSelected = _selectedPreference == value;
+
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        if (_selectedPreference == value) return;
         setState(() {
           _selectedPreference = value;
         });
+        await _savePreference(value);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
