@@ -64,7 +64,7 @@ class _InboxPageState extends State<InboxPage> {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 10),
             itemCount: conversations.length,
-            separatorBuilder: (_, _) => const Divider(
+            separatorBuilder: (_, __) => const Divider(
               color: Colors.white10,
               height: 1,
               indent: 76,

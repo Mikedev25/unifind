@@ -51,45 +51,6 @@ class ItemService {
         .toList());
   }
 
-  /// Search items by keyword (searches in name and model fields)
-  /// Returns a stream of items matching the search query
-  Stream<List<Map<String, dynamic>>> searchItems({
-    required String keyword,
-    String? category,
-    String? status,
-  }) {
-    // Get all items and filter in memory for better search UX
-    return _db
-      .collection('items')
-      .orderBy('createdAt', descending: true)
-      .snapshots()
-      .map((snapshot) {
-        final items = snapshot.docs
-          .map((doc) => {'id': doc.id, ...doc.data()})
-          .toList();
-        
-        // Filter by keyword (case-insensitive search in name and model)
-        final searchKeyword = keyword.toLowerCase();
-        var filtered = items.where((item) {
-          final name = (item['name'] ?? '').toString().toLowerCase();
-          final model = (item['model'] ?? '').toString().toLowerCase();
-          return name.contains(searchKeyword) || model.contains(searchKeyword);
-        }).toList();
-
-        // Filter by category if specified
-        if (category != null && category != 'All') {
-          filtered = filtered.where((item) => item['category'] == category).toList();
-        }
-
-        // Filter by status if specified
-        if (status != null && status != 'All') {
-          filtered = filtered.where((item) => item['status'] == status).toList();
-        }
-
-        return filtered;
-      });
-  }
-
   Future<void> clearAllItems() async {
     final snapshot = await _db.collection('items').get();
     for (var doc in snapshot.docs) {
