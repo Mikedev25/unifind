@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 
 class ItemService {
   final _db = FirebaseFirestore.instance;
@@ -12,7 +13,7 @@ class ItemService {
     final bytes = await file.readAsBytes();
     return base64Encode(bytes);
   } catch (e) {
-    print('Image conversion error: $e');
+    debugPrint('Image conversion error: $e');
     return null;
   }
 }
@@ -97,5 +98,3 @@ class ItemService {
     }
   }
 }
-
-
