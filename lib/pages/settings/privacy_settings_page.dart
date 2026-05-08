@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'privacy policy/privacy_policy_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PrivacySettingsPage extends StatefulWidget {
   const PrivacySettingsPage({super.key});
@@ -9,13 +11,63 @@ class PrivacySettingsPage extends StatefulWidget {
 }
 
 class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
-  bool _allowLocationSharing = false;
+  bool _showMyLocation = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _loadPrivacySettings();
   }
+  
+  // Load on init
+Future<void> _loadPrivacySettings() async {
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
 
+      final showLocation = doc.data()?['showMyLocation'] as bool?;
+      if (mounted) {
+        setState(() => _showMyLocation = showLocation ?? false);
+      }
+    }
+  } catch (e) {
+    debugPrint('Failed to load privacy settings: $e');
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
+
+// Save on toggle
+Future<void> _saveLocationSetting(bool value) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  try {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .set(
+          {'showMyLocation': value},
+          SetOptions(merge: true),
+        );
+  } catch (e) {
+    debugPrint('Failed to save location setting: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save. Please try again.'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+      );
+    }
+  }
+}
 
 
   @override
@@ -39,7 +91,11 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: ListView(
+      body: _isLoading
+        ? const Center(
+          child:  CircularProgressIndicator(color: Color(0xFF2ECC71)),
+        ) 
+      : ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const SizedBox(height: 20),
@@ -97,11 +153,12 @@ class _PrivacySettingsPageState extends State<PrivacySettingsPage> {
                   ),
                 ),
                 Switch(
-                  value: _allowLocationSharing,
-                  onChanged: (value) {
+                  value: _showMyLocation,
+                  onChanged: (value) async {
                     setState(() {
-                      _allowLocationSharing = value;
+                      _showMyLocation = value;
                     });
+                    await _saveLocationSetting(value);
                   },
                   activeThumbColor: const Color(0xFF2ECC71),
                   activeTrackColor: const Color(0xFF2ECC71).withValues(alpha: 0.3),

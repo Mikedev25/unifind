@@ -107,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildActionButton(
             label: 'Clear All Items',
             backgroundColor: Colors.orange.withValues(alpha: 0.2),
-            textColor: Colors.orange,
+            textColor: Colors.white,
             onPressed: () {
               _showClearItemsConfirmation();
             },
@@ -135,12 +135,12 @@ class _SettingsPageState extends State<SettingsPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF2ECC71).withValues(alpha: 0.2),
+                color: const Color(0xFF2ECC71),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFF2ECC71),
+                color: Colors.white,
                 size: 24,
               ),
             ),

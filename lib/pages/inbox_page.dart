@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:unifind/pages/chat_page.dart';
 import '../backends/message_service.dart';
 
 class InboxPage extends StatefulWidget {
@@ -81,6 +82,11 @@ class _InboxPageState extends State<InboxPage> {
 
     return InkWell(
       onTap: () {
+        Navigator.push(context, MaterialPageRoute(
+          builder: (_) => ChatPage(
+            conversationID:  convo['id'],
+            otherUserName: convo['otherUsername'] ?? 'Unknown')
+        ));
         //Todo: navigate to chatpage (person-to-person convo)
         //Navigator.push(context, MaterialPageRoute(
         //  builder: (_) => ChatPage(conversationId: convo['id']),

@@ -185,7 +185,7 @@ class _HomePageState extends State<HomePage> {
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: .82,
+        childAspectRatio: .88,
       ),
       itemCount: displayed.length,
       itemBuilder: (context, index) => _buildItemCard(displayed[index]),
@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                       fit: BoxFit.cover,
                   )
                   : Container(
-                    height: 115,
+                    height: 95,
                     width: double.infinity,
                     color: const Color(0xFF3A3A3A),
                     child: const Icon(
@@ -248,74 +248,74 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(9, 7, 9, 9),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.name,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  item.model,
-                  style: const TextStyle(fontSize: 11, color: Colors.white54),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: () async {
-                    final currentUid = AuthService().currentUser?.uid ?? '';
-                    if (item.ownerId == currentUid) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                        content: Text('This is your own item.',
-                        style: TextStyle(color: Colors.white),
-                        ),
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        ),
-                      );
-                      return;
-                    }
-
-                    final conversationID = await MessageService().getOrCreateConversation(
-                      otherUserId: item.ownerId, 
-                      otherUserName: item.ownerName, 
-                      itemId: item.id, 
-                      itemName: item.name,
-                    );
-
-                    if (!mounted) return;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatPage(
-                            conversationID: conversationID, 
-                            otherUserName: item.ownerName,
+                  const SizedBox(height: 2),
+                  Text(
+                    item.model,
+                    style: const TextStyle(fontSize: 11, color: Colors.white54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 15),
+                  GestureDetector(
+                    onTap: () async {
+                      final currentUid = AuthService().currentUser?.uid ?? '';
+                      if (item.ownerId == currentUid) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                          content: Text('This is your own item.',
+                          style: TextStyle(color: Colors.white),
                           ),
-                        ),
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final conversationID = await MessageService().getOrCreateConversation(
+                        otherUserId: item.ownerId, 
+                        otherUserName: item.ownerName, 
+                        itemId: item.id, 
+                        itemName: item.name,
                       );
-                  },
-                  child: const Text(
-                    'View Details',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF2ECC71),
-                      fontWeight: FontWeight.w500
+
+                      if (!mounted) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ChatPage(
+                              conversationID: conversationID, 
+                              otherUserName: item.ownerName,
+                            ),
+                          ),
+                        );
+                    },
+                    child: const Text(
+                      'Send Message',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF2ECC71),
+                        fontWeight: FontWeight.w500
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
     );
