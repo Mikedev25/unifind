@@ -53,14 +53,28 @@ class _ChatPageState extends State<ChatPage> {
     final image = _pendingImageBase64;
     setState(() => _pendingImageBase64 = null);
 
-    await _messageService.sendMessage(
-      conversationId: widget.conversationID, 
-      text: text,
-      imageBase64: image,
-    );
-
-    setState(() => _isSending = false);
-    _scrollToBottom();
+    try {
+      await _messageService.sendMessage(
+        conversationId: widget.conversationID, 
+        text: text,
+        imageBase64: image,
+      );
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -85,8 +99,8 @@ class _ChatPageState extends State<ChatPage> {
         backgroundColor:  const Color(0xFF1C1C1C),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.light_mode, color: Colors.white, size: 20),
-          onPressed: () {},
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
           ),
           title: Row(
             children: [

@@ -12,13 +12,23 @@ class MessageService {
     return _db
         .collection('conversations')
         .where('participants', arrayContains: _uid)
-        .orderBy('lastMessageTime', descending: true)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map((snap) {
+          final docs = snap.docs;
+          // Sort locally by lastMessageTime since composite index might not exist
+          docs.sort((a, b) {
+            final timeA = a['lastMessageTime'] as Timestamp?;
+            final timeB = b['lastMessageTime'] as Timestamp?;
+            if (timeA == null || timeB == null) return 0;
+            return timeB.compareTo(timeA); // Descending order
+          });
+          
+          return docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList();
+        });
   }
 
   Stream<List<Map<String, dynamic>>> getMessagesStream(String converstationID) {
@@ -55,16 +65,22 @@ class MessageService {
         return doc.id; // Return existing conversation
       }
     }
+    //Fetch username before creating conversation
+    final currentUserDoc = await _db.collection('users').doc(_uid).get();
+    final currentUserName = currentUserDoc.data()?['name'] ?? 
+                          currentUserDoc.data()?['displayName'] ?? 
+                          'Unknown';
 
     // Create new conversation
     final ref = _db.collection('conversations').doc();
     await ref.set({
       'participants': [_uid, otherUserId],
-      'userName': otherUserName,
+      'participantNames': {_uid: currentUserName, otherUserId: otherUserName}, // Store both user names
+      'otherUserName': otherUserName, // Keep for backward compatibility
       'avatarUrl': null,
       'lastMessage': '',
       'lastMessageTime': FieldValue.serverTimestamp(),
-      'unreadCount': 0,
+      'unreadCounts': {_uid: 0, otherUserId: 0},
       'itemId': itemId,
       'itemName': itemName,
     });
@@ -79,6 +95,11 @@ class MessageService {
     final ref = _db.collection('conversations').doc(conversationId);
     final msgRef = ref.collection('messages').doc();
 
+    // Get conversation to find the other participant
+    final convoDoc = await ref.get();
+    final participants = List<String>.from(convoDoc['participants'] ?? []);
+    final receiverId = participants.firstWhere((id) => id != _uid, orElse: () => '');
+
     await msgRef.set({
       'senderId': _uid,
       'text': text,
@@ -89,13 +110,14 @@ class MessageService {
     await ref.update({
       'lastMessage': imageBase64 != null ? 'Image' : text,
       'lastMessageTime': FieldValue.serverTimestamp(),
-      'unreadCount': FieldValue.increment(1),
+      'unreadCounts.$_uid': 0, // Sender's count stays 0
+      'unreadCounts.$receiverId': FieldValue.increment(1), // Receiver's count increments
     });
   }
 
   Future<void> markAsRead(String conversationID) async {
-    await _db.collection('conversation').doc(conversationID).update({
-      'unreadCount': 0,
+    await _db.collection('conversations').doc(conversationID).update({
+      'unreadCounts.$_uid': 0,
     });
   }
 }

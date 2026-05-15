@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:unifind/pages/chat_page.dart';
 import '../backends/message_service.dart';
+import '../backends/auth_service.dart';
 
 class InboxPage extends StatefulWidget {
   const InboxPage({super.key});
@@ -78,14 +79,23 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Widget _buildConversationTile(Map<String, dynamic> convo) {
-    final bool hasUnread = (convo['unreadCount'] ?? 0) > 0;
+    final currentUid = AuthService().currentUser?.uid ?? '';
+    final unreadCounts = Map<String, dynamic>.from(convo['unreadCounts'] ?? {});
+    final currentUserUnreadCount = unreadCounts[currentUid] ?? 0;
+    final bool hasUnread = currentUserUnreadCount > 0;
+    
+    // Get the other user's name from participantNames or fall back to otherUserName
+    final participantNames = Map<String, dynamic>.from(convo['participantNames'] ?? {});
+    final participants = List<String>.from(convo['participants'] ?? []);
+    final otherUserId = participants.firstWhere((id) => id != currentUid, orElse: () => '');
+    final otherUserName = participantNames[otherUserId] ?? convo['userName'] ?? 'Unknown';
 
     return InkWell(
       onTap: () {
         Navigator.push(context, MaterialPageRoute(
           builder: (_) => ChatPage(
             conversationID:  convo['id'],
-            otherUserName: convo['otherUsername'] ?? 'Unknown')
+            otherUserName: otherUserName)
         ));
         //Todo: navigate to chatpage (person-to-person convo)
         //Navigator.push(context, MaterialPageRoute(
@@ -107,7 +117,7 @@ class _InboxPageState extends State<InboxPage> {
                     : null,
                   child:  convo['avatarUrl'] == null
                     ? Text(
-                      (convo['userName'] ?? '?') [0].toUpperCase(),
+                      (otherUserName ?? '?') [0].toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -138,7 +148,7 @@ class _InboxPageState extends State<InboxPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    convo['userName'] ?? 'Unknown',
+                    otherUserName,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
@@ -174,7 +184,7 @@ class _InboxPageState extends State<InboxPage> {
                       : Colors.white30,
                   ),
                 ),
-                if (hasUnread && (convo['unreadCount'] ?? 0) >0) ...[
+                if (hasUnread && currentUserUnreadCount > 0) ...[
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -182,7 +192,7 @@ class _InboxPageState extends State<InboxPage> {
                       color: const Color(0xFF2ECC71),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text('${convo['unredCount']}',
+                    child: Text('$currentUserUnreadCount',
                     style: const TextStyle(
                       fontSize: 11,
                       color: Colors.white,
